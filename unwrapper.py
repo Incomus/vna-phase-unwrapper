@@ -1,3 +1,7 @@
+from kivy.app import App
+from kivy.lang import Builder
+from kivy.properties import StringProperty, BooleanProperty
+from kivymd.uix.screen import MDScreen
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,11 +21,49 @@ import traceback
 import sys
 import math
 import os
+from tkinter import filedialog, Tk
+
+
+class MainScreen(MDScreen):
+    min_jump_default = StringProperty("150")  # Define the default value here
+    n_steps_default = StringProperty("1")
+    min_offset_default = StringProperty("1")
+    max_offset_default = StringProperty("50")
+    iterations_default = StringProperty("5")
+    scale_reference_path = StringProperty(r'D:\Gleb\S type plot\time_scaling.csv')
+    noise_enabled = BooleanProperty(False)
+    def on_checkbox_active(self, checkbox, value):
+        self.some_option_enabled = value
+
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
     
 scale_reference_df = pd.read_csv(r'D:\Gleb\S type plot\time_scaling.csv')
+
+def select_file_dialog(self, title, target_attr, mode="file"):
+    root = Tk()
+    root.withdraw()
+
+    # Use the current value of the StringProperty as the default path
+    default_path = getattr(self, target_attr, "")
+    initial_dir = os.path.dirname(default_path) if os.path.isfile(default_path) else default_path or "."
+    
+    if mode == "folder":
+        selected_path = filedialog.askdirectory(
+            title=title,
+            initialdir=initial_dir
+        )
+    else:
+        selected_path = filedialog.askopenfilename(
+            title=title,
+            initialdir=initial_dir,
+            filetypes=[("All files", "*.*")]
+        )
+    root.destroy()
+    
+    if selected_path:
+        setattr(self, target_attr, selected_path)
 
 def collect_experiments(main_folder, depth):
     file_list = []
@@ -357,7 +399,7 @@ def process_files(main_folder_path, setup):
                 times.append(time0)
                 time1 = time0
                 times.append(time1)
-            if sus == '1':
+            if override == '1':
                 df = recursive_crap_separator(df, 1, times, 'iter_1')
             else:
                 df = recursive_gap_separator(df, 1, times, 'iter_1')
@@ -554,7 +596,7 @@ if __name__ == "__main__":
     try:
         min_jump = 150
         n_steps = '1'
-        sus = '0'
+        override = '0'
         min_offset = 1
         max_offset = 50
         iterations = 5
@@ -574,7 +616,7 @@ if __name__ == "__main__":
             if user_input == '1':
                 min_jump = int(input('Set minimum jump\n'))
                 n_steps = choose('Set number of algorithm steps (default: 1)', '1', '2', '3')
-                sus = choose('Set override (default: 0)', '0', '1')
+                override = choose('Set override (default: 0)', '0', '1')
             if user_input == '2':
                 setup *= -1
             if user_input == '3':
